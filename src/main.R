@@ -1,3 +1,5 @@
+source("src/utils.R")
+
 args <- commandArgs(trailingOnly = TRUE)
 day <- args[1]
 prob <- args[2]
