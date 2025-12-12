@@ -16,6 +16,5 @@ solve2 <- function(data) {
   data <- gsubfn(pattern, function(w) substitutions[[w]], data)
   nums <- gsub("[^0-9]", "", data)
   nums <- paste0(substr(nums, 1, 1), substr(nums, nchar(nums), nchar(nums)))
-  print(nums)
   cat(sum(as.numeric(nums)), "\n")
 }

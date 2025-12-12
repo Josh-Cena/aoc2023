@@ -20,3 +20,17 @@ quicksort <- function(x, compare) {
 
   c(quicksort(less, compare), equal, quicksort(greater, compare))
 }
+
+reduce <- function(x, f, init = NULL) {
+  if (is.null(init)) {
+    result <- x[[1]]
+    start <- 2
+  } else {
+    result <- init
+    start <- 1
+  }
+  for (i in start:length(x)) {
+    result <- f(result, x[[i]])
+  }
+  return(result)
+}

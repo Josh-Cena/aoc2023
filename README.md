@@ -16,3 +16,12 @@ Rscript src/main.r 1 2 ex
 ```
 
 (And make sure that `inputs/day1/ex.txt` exists.)
+
+Note: to successfully install `gmp`, I had to do the following:
+
+```bash
+cat <<EOF > ~/.R/Makevars
+CPPFLAGS += -I/opt/homebrew/opt/gmp/include
+LDFLAGS  += -L/opt/homebrew/opt/gmp/lib
+EOF
+```
