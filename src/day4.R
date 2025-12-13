@@ -29,7 +29,7 @@ solve2 <- function(data) {
   })
   scores <- sapply(lines, num_matches)
   counts <- rep(1, length(lines))
-  for (i in 1:length(scores)) {
+  for (i in seq_along(scores)) {
     if (scores[i] > 0) {
       for (j in (i + 1):(i + scores[i])) {
         counts[j] <- counts[j] + counts[i]

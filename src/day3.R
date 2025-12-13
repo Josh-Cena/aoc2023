@@ -1,13 +1,13 @@
 solve1 <- function(data) {
   sum <- 0
-  for (i in 1:length(data)) {
+  for (i in seq_along(data)) {
     match_res <- gregexpr("[0-9]+", data[i])
     matches <- match_res[[1]]
     if (matches[1] == -1) next
     starts <- as.integer(matches)
     values <- regmatches(data[i], match_res)[[1]]
     lengths <- nchar(values)
-    for (j in 1:length(starts)) {
+    for (j in seq_along(starts)) {
       l <- starts[j] - 1
       r <- starts[j] + lengths[j]
       neighbors <- paste0(
@@ -39,14 +39,14 @@ solve2 <- function(data) {
     }
     neighbors
   }
-  for (i in 1:length(data)) {
+  for (i in seq_along(data)) {
     match_res <- gregexpr("[0-9]+", data[i])
     matches <- match_res[[1]]
     if (matches[1] == -1) next
     starts <- as.integer(matches)
     values <- regmatches(data[i], match_res)[[1]]
     lengths <- nchar(values)
-    for (j in 1:length(starts)) {
+    for (j in seq_along(starts)) {
       l <- starts[j] - 1
       r <- starts[j] + lengths[j]
       if (substr(data[i], l, l) == "*") {

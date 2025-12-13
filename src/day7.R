@@ -59,7 +59,7 @@ compare_rows <- function(strengths) {
     }
     cards1 <- unlist(strsplit(row1$hand, ""))
     cards2 <- unlist(strsplit(row2$hand, ""))
-    for (i in 1:length(cards1)) {
+    for (i in seq_along(cards1)) {
       if (match(cards1[i], strengths) > match(cards2[i], strengths)) {
         return(1)
       } else if (match(cards1[i], strengths) < match(cards2[i], strengths)) {
@@ -82,7 +82,7 @@ solve1 <- function(data) {
                   "9", "T", "J", "Q", "K", "A"))
   )
   data <- do.call(rbind, data_sorted)
-  total_score <- sum(1:nrow(data) * data$bid)
+  total_score <- sum(seq_len(nrow(data)) * data$bid)
   cat(total_score, "\n")
 }
 
@@ -99,6 +99,6 @@ solve2 <- function(data) {
                    "8", "9", "T", "Q", "K", "A"))
   )
   data <- do.call(rbind, data_sorted)
-  total_score <- sum(1:nrow(data) * data$bid)
+  total_score <- sum(seq_len(nrow(data)) * data$bid)
   cat(total_score, "\n")
 }

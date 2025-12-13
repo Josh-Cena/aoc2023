@@ -18,7 +18,7 @@ parse_line <- function(line) {
 solve1 <- function(data) {
   lines <- sapply(data, parse_line)
   total <- 0
-  for (i in 1:length(lines)) {
+  for (i in seq_along(lines)) {
     line <- lines[[i]]
     if (all(line["red", ] <= 12
         & line["green", ] <= 13

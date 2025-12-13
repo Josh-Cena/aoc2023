@@ -48,7 +48,7 @@ solve2 <- function(data) {
   mat <- t(as.matrix(sapply(strsplit(data, ""), unlist)))
   is_loop <- trace_loop(mat)
   enclosed <- 0
-  for (i in 1:nrow(mat)) {
+  for (i in seq_len(nrow(mat))) {
     inside <- FALSE
     j <- 1
     while (j <= ncol(mat)) {

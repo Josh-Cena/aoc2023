@@ -7,7 +7,7 @@ remove_seg <- function(segs, start, end) {
   removed_rows <- NULL
   added_rows <- NULL
   # Adjust partial overlap
-  for (i in 1:nrow(new_segs)) {
+  for (i in seq_len(nrow(new_segs))) {
     # If there's a single segment that fully contains [start, end),
     # it needs to be split into two segments.
     if (new_segs$starts[i] < start && new_segs$ends[i] > end) {
@@ -49,7 +49,7 @@ compose_maps <- function(map1, map2) {
   map1_segs <- setNames(data.frame(map1), c("starts", "ends", "data"))
   map2_segs <- setNames(data.frame(map2), c("starts", "ends", "data"))
 
-  for (i in 1:nrow(map1)) {
+  for (i in seq_len(nrow(map1))) {
     si <- map1$from_start[i]
     ei <- map1$from_end[i]
     di <- map1$diff[i]
@@ -58,7 +58,7 @@ compose_maps <- function(map1, map2) {
     map2_rev <- map2
     map2_rev$from_start <- map2$from_start - di
     map2_rev$from_end <- map2$from_end - di
-    for (j in 1:nrow(map2_rev)) {
+    for (j in seq_len(nrow(map2_rev))) {
       s <- max(si, map2_rev$from_start[j])
       e <- min(ei, map2_rev$from_end[j])
 
@@ -109,7 +109,7 @@ map_range_min <- function(range, map) {
   applicable <- map[!(map$from_end <= range[1] | map$from_start >= range[2]), ]
   range_min <- map_seed(range[1], map)
   if (nrow(applicable) > 0) {
-    for (i in 1:nrow(applicable)) {
+    for (i in seq_len(nrow(applicable))) {
       s <- max(range[1], applicable$from_start[i])
       range_min <- min(range_min, s + applicable$diff[i])
     }
@@ -158,7 +158,8 @@ solve2 <- function(data) {
   seeds <- parsed$seeds
   maps <- parsed$maps
   seeds <- matrix(seeds, ncol = 2, byrow = TRUE)
-  seeds[1:nrow(seeds), 2] <- seeds[1:nrow(seeds), 1] + seeds[1:nrow(seeds), 2]
+  ind <- seq_len(nrow(seeds))
+  seeds[ind, 2] <- seeds[ind, 1] + seeds[ind, 2]
   all_map <- maps[[1]]
   for (map in maps[2:length(maps)]) {
     all_map <- compose_maps(all_map, map)
