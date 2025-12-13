@@ -92,7 +92,6 @@ solve2 <- function(data) {
   data <- setNames(data, c("hand", "bid"))
   data$bid <- as.numeric(data$bid)
   data$type <- sapply(data$hand, hand_type_joker)
-  print(data)
   data_sorted <- quicksort(
     split(data, seq_len(nrow(data))),
     compare_rows(c("J", "2", "3", "4", "5", "6", "7",

@@ -7,7 +7,6 @@ winning_vals <- function(row) {
   d <- row[["distances"]]
   discriminant <- t^2 - 4 * d
   if (discriminant < 0) {
-    print(0)
     return(0)
   } else {
     x1 <- (t - sqrt(discriminant)) / 2
