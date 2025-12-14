@@ -17,11 +17,18 @@ Rscript src/main.r 1 2 ex
 
 (And make sure that `inputs/day1/ex.txt` exists.)
 
-Note: to successfully install `gmp`, I had to do the following:
+Note: to successfully install `gmp` amd `DiagrammeR`, I had to do the following:
 
 ```bash
 cat <<EOF > ~/.R/Makevars
 CPPFLAGS += -I/opt/homebrew/opt/gmp/include
 LDFLAGS  += -L/opt/homebrew/opt/gmp/lib
+CPPFLAGS += -I/opt/homebrew/opt/icu4c/include
+LDFLAGS  += -L/opt/homebrew/opt/icu4c/lib
+CPPFLAGS += -I/opt/homebrew/include
+LDFLAGS  += -L/opt/homebrew/lib -Wl,-rpath,/opt/homebrew/lib
+FC = /opt/homebrew/Cellar/gcc/15.2.0/bin/gfortran
+F77 = /opt/homebrew/Cellar/gcc/15.2.0/bin/gfortran
+FLIBS = -L/opt/homebrew/Cellar/gcc/15.2.0/lib/gcc/15
 EOF
 ```

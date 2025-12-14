@@ -1,3 +1,6 @@
 install.packages("gsubfn", repos = "https://cran.r-project.org")
 install.packages("gmp", repos = "https://cran.r-project.org")
 install.packages("collections", repos = "https://cran.r-project.org")
+install.packages("DiagrammeR", repos = "https://cran.r-project.org")
+install.packages("DiagrammeRsvg", repos = "https://cran.r-project.org")
+install.packages("rsvg", repos = "https://cran.r-project.org")
