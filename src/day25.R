@@ -3,9 +3,9 @@ library("DiagrammeR")
 solve1 <- function(data) {
   parts <- strsplit(data, ": ")
   nodes <- sapply(parts, function(x) x[1])
-  targets <- lapply(parts, function(x) strsplit(x[2], " "))
+  targets <- lapply(parts, function(x) strsplit(x[2], " ")[[1]])
   edges_from <- unlist(lapply(seq_along(targets), function(i) {
-    rep(nodes[[i]], length(targets[[i]][[1]]))
+    rep(nodes[[i]], length(targets[[i]]))
   }))
   targets <- unlist(targets)
   nodes <- unique(c(nodes, targets))
