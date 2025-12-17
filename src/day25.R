@@ -1,54 +1,21 @@
-library("DiagrammeR")
-
 solve1 <- function(data) {
   parts <- strsplit(data, ": ")
   nodes <- sapply(parts, function(x) x[1])
   targets <- lapply(parts, function(x) strsplit(x[2], " ")[[1]])
-  edges_from <- unlist(lapply(seq_along(targets), function(i) {
-    rep(nodes[[i]], length(targets[[i]]))
-  }))
-  targets <- unlist(targets)
-  nodes <- unique(c(nodes, targets))
-  edges_from <- match(edges_from, nodes)
-  targets <- match(targets, nodes)
-  nodes <- create_node_df(
-    n = length(nodes),
-    label = nodes,
-    width = 0.25,
-    height = 0.25
-  )
-  edges <- create_edge_df(
-    from = edges_from,
-    to = targets
-  )
-  graph <- create_graph(nodes_df = nodes, edges_df = edges)
-  graph <- set_graph_undirected(graph)
-  export_graph(graph, file_name = "src/day25.png")
-
-  # For example
-  # edges_to_cut <- list(
-  #   c("hfx", "pzl"),
-  #   c("bvb", "cmg"),
-  #   c("nvd", "jqt")
-  # )
-
-  edges_to_cut <- list(
-    c("ffj", "lkm"),
-    c("ljl", "xhg"),
-    c("vgs", "xjb")
-  )
-
-  for (edge in edges_to_cut) {
-    graph <- delete_edge(graph, from = match(edge[1], nodes$label),
-                to = match(edge[2], nodes$label))
+  nodes <- unique(c(nodes, unlist(targets)))
+  graph <- igraph::make_empty_graph(n = length(nodes), directed = FALSE)
+  for (i in seq_along(targets)) {
+    graph <- igraph::add_edges(graph,
+      unlist(sapply(targets[[i]], function(x) c(i, match(x, nodes)))))
   }
-
-  comp1size <- length(get_all_connected_nodes(graph,
-                  match(edges_to_cut[[1]][1], nodes$label))) + 1
-  comp2size <- length(get_all_connected_nodes(graph,
-                  match(edges_to_cut[[1]][2], nodes$label))) + 1
-  cat(comp1size * comp2size, "\n")
-  export_graph(graph, file_name = "src/day25_cut.png")
+  igraph::V(graph)$label <- nodes
+  dgr <- DiagrammeR::from_igraph(graph)
+  dgr <- DiagrammeR::set_node_attrs(dgr, "width", 0.25)
+  dgr <- DiagrammeR::set_node_attrs(dgr, "height", 0.25)
+  DiagrammeR::export_graph(dgr, file_name = "src/day25.png")
+  min_cut <- igraph::min_cut(graph, value.only = FALSE)
+  stopifnot(min_cut$value == 3)
+  cat(length(min_cut$partition1) * length(min_cut$partition2), "\n")
 }
 
 solve2 <- function(data) {
