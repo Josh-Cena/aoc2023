@@ -16,7 +16,10 @@ count_dp <- function(cur_springs, expected_counts) {
     for (j in 1:(m + 1)) {
       for (seg_len in 0:max_seg_len) {
         ways <- dp[j, seg_len + 1]
-        if (ways == 0) next # Unreachable state
+        if (ways == 0) {
+          # Unreachable state
+          next
+        }
         if (ch == "." || ch == "?") {
           if (j <= m && seg_len == expected_counts[j]) {
             # Close this segment. If length doesn't match, dp=0

@@ -80,10 +80,14 @@ get_paths <- function(rules) {
       next
     }
     node_rules <- rules[[node]]
-    if (is.null(node_rules) || length(node_rules) == 0) next
+    if (is.null(node_rules) || length(node_rules) == 0) {
+      next
+    }
     sources <- names(node_rules)
     for (s in sources) {
-      if (s %in% st$visited) next
+      if (s %in% st$visited) {
+        next
+      }
       edge_list <- node_rules[[s]]
       for (conds in edge_list) {
         stack[[length(stack) + 1L]] <- list(
@@ -99,8 +103,13 @@ get_paths <- function(rules) {
 }
 
 get_cube <- function(inequalities) {
-  ranges <- list("x" = c(1, 4000), "m" = c(1, 4000),
-              "a" = c(1, 4000), "s" = c(1, 4000), sign = 1)
+  ranges <- list(
+    "x" = c(1, 4000),
+    "m" = c(1, 4000),
+    "a" = c(1, 4000),
+    "s" = c(1, 4000),
+    sign = 1
+  )
   for (ineq in inequalities) {
     var <- substr(ineq, 1, 1)
     op <- substr(ineq, 2, 2)
@@ -129,8 +138,13 @@ intersect_cubes <- function(cube1, cube2, sign) {
   if (x1 > x2 || m1 > m2 || a1 > a2 || s1 > s2) {
     return(NULL)
   }
-  return(list(x = c(x1, x2), m = c(m1, m2),
-              a = c(a1, a2), s = c(s1, s2), sign = sign))
+  return(list(
+    x = c(x1, x2),
+    m = c(m1, m2),
+    a = c(a1, a2),
+    s = c(s1, s2),
+    sign = sign
+  ))
 }
 
 add_cube <- function(cube, cubes) {
@@ -138,7 +152,9 @@ add_cube <- function(cube, cubes) {
   new_cubes[[length(new_cubes) + 1]] <- cube
   for (c in cubes) {
     intersection <- intersect_cubes(cube, c, -c$sign)
-    if (is.null(intersection)) next
+    if (is.null(intersection)) {
+      next
+    }
     new_cubes[[length(new_cubes) + 1]] <- intersection
   }
   return(new_cubes)
@@ -162,10 +178,15 @@ solve2 <- function(data) {
       target <- rule$dests[[i, "target"]]
       cond <- rule$dests[[i, "cond"]]
       conds <- prev_conds
-      if (cond != "TRUE") conds <- c(conds, cond)
-      if (is.null(reverse_rules[[target]])) reverse_rules[[target]] <- list()
-      if (is.null(reverse_rules[[target]][[rule$name]]))
+      if (cond != "TRUE") {
+        conds <- c(conds, cond)
+      }
+      if (is.null(reverse_rules[[target]])) {
+        reverse_rules[[target]] <- list()
+      }
+      if (is.null(reverse_rules[[target]][[rule$name]])) {
         reverse_rules[[target]][[rule$name]] <- list()
+      }
       all_paths <- reverse_rules[[target]][[rule$name]]
       reverse_rules[[target]][[rule$name]][[length(all_paths) + 1]] <- conds
       if (cond != "TRUE") prev_conds <- c(prev_conds, negate_cond(cond))
@@ -179,7 +200,8 @@ solve2 <- function(data) {
   }
   volume <- as.bigz(0)
   for (cube in cubes_union) {
-    volume <- volume + cube$sign *
+    volume <- volume +
+      cube$sign *
         as.bigz(diff(cube$x) + 1) *
         as.bigz(diff(cube$m) + 1) *
         as.bigz(diff(cube$a) + 1) *

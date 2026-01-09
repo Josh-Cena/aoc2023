@@ -39,8 +39,12 @@ remove_seg <- function(segs, start, end) {
       }
     }
   }
-  if (!is.null(removed_rows)) new_segs <- new_segs[-removed_rows, ]
-  if (!is.null(added_rows)) new_segs <- rbind(new_segs, added_rows)
+  if (!is.null(removed_rows)) {
+    new_segs <- new_segs[-removed_rows, ]
+  }
+  if (!is.null(added_rows)) {
+    new_segs <- rbind(new_segs, added_rows)
+  }
   return(new_segs)
 }
 
@@ -128,7 +132,8 @@ parse_input <- function(data) {
       # Columns: to, from, range_len
       map <- matrix(
         sapply(strsplit(lines[2:length(lines)], " "), as.numeric),
-        ncol = 3, byrow = TRUE
+        ncol = 3,
+        byrow = TRUE
       )
       # New columns: from_start, from_end, diff
       map[, 1] <- map[, 1] - map[, 2]

@@ -41,7 +41,8 @@ build_graph <- function(data) {
     label = node_labels,
     type = node_types,
     color = c("black", "blue", "green", "red")[
-      match(node_types, c("broadcaster", "%", "&", ""))],
+      match(node_types, c("broadcaster", "%", "&", ""))
+    ],
     width = 0.25,
     height = 0.25
   )
@@ -67,8 +68,12 @@ build_graph <- function(data) {
   ))
 }
 
-push_btn <- function(graph, flip_flop_states, conjunction_states,
-              track_inputs = NULL) {
+push_btn <- function(
+  graph,
+  flip_flop_states,
+  conjunction_states,
+  track_inputs = NULL
+) {
   nodes <- get_node_df(graph)
   broadcaster <- nodes[nodes$label == "broadcaster", "id"]
   nbrs <- get_successors(graph, broadcaster)
@@ -83,7 +88,9 @@ push_btn <- function(graph, flip_flop_states, conjunction_states,
     node_type <- nodes[pulse$node, "type"]
     new_level <- ""
     if (node_type == "%") {
-      if (pulse$level == "high") next
+      if (pulse$level == "high") {
+        next
+      }
       flip_flop_states[pulse$node] <- !flip_flop_states[pulse$node]
       new_level <- if (flip_flop_states[pulse$node]) "high" else "low"
     } else if (node_type == "&") {
@@ -107,9 +114,11 @@ push_btn <- function(graph, flip_flop_states, conjunction_states,
           inputs[[key]] <- c(inputs[[key]], new_level)
         }
       }
-      if (new_level == "high")
+      if (new_level == "high") {
         high_pulses <- high_pulses + length(nbrs)
-      else low_pulses <- low_pulses + length(nbrs)
+      } else {
+        low_pulses <- low_pulses + length(nbrs)
+      }
     }
   }
   return(list(

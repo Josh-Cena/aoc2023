@@ -2,10 +2,18 @@ deflect_to <- list(
   "." = list(left = "left", right = "right", up = "up", down = "down"),
   "/" = list(left = "down", right = "up", up = "right", down = "left"),
   "\\" = list(left = "up", right = "down", up = "left", down = "right"),
-  "-" = list(left = "left", right = "right",
-          up = c("left", "right"), down = c("left", "right")),
-  "|" = list(left = c("up", "down"), right = c("up", "down"),
-          up = "up", down = "down")
+  "-" = list(
+    left = "left",
+    right = "right",
+    up = c("left", "right"),
+    down = c("left", "right")
+  ),
+  "|" = list(
+    left = c("up", "down"),
+    right = c("up", "down"),
+    up = "up",
+    down = "down"
+  )
 )
 
 # Remember that these are not ray directions, but the side of the cell

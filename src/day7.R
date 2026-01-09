@@ -71,15 +71,31 @@ compare_rows <- function(strengths) {
 }
 
 solve1 <- function(data) {
-  data <- data.frame(matrix(unlist(strsplit(data, " ")),
-    ncol = 2, byrow = TRUE))
+  data <- data.frame(matrix(
+    unlist(strsplit(data, " ")),
+    ncol = 2,
+    byrow = TRUE
+  ))
   data <- setNames(data, c("hand", "bid"))
   data$bid <- as.numeric(data$bid)
   data$type <- sapply(data$hand, hand_type)
   data_sorted <- quicksort(
     split(data, seq_len(nrow(data))),
-    compare_rows(c("2", "3", "4", "5", "6", "7", "8",
-                  "9", "T", "J", "Q", "K", "A"))
+    compare_rows(c(
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "T",
+      "J",
+      "Q",
+      "K",
+      "A"
+    ))
   )
   data <- do.call(rbind, data_sorted)
   total_score <- sum(seq_len(nrow(data)) * data$bid)
@@ -87,15 +103,31 @@ solve1 <- function(data) {
 }
 
 solve2 <- function(data) {
-  data <- data.frame(matrix(unlist(strsplit(data, " ")),
-    ncol = 2, byrow = TRUE))
+  data <- data.frame(matrix(
+    unlist(strsplit(data, " ")),
+    ncol = 2,
+    byrow = TRUE
+  ))
   data <- setNames(data, c("hand", "bid"))
   data$bid <- as.numeric(data$bid)
   data$type <- sapply(data$hand, hand_type_joker)
   data_sorted <- quicksort(
     split(data, seq_len(nrow(data))),
-    compare_rows(c("J", "2", "3", "4", "5", "6", "7",
-                   "8", "9", "T", "Q", "K", "A"))
+    compare_rows(c(
+      "J",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "T",
+      "Q",
+      "K",
+      "A"
+    ))
   )
   data <- do.call(rbind, data_sorted)
   total_score <- sum(seq_len(nrow(data)) * data$bid)

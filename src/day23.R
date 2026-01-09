@@ -2,10 +2,10 @@ library("collections", include.only = "stack")
 
 # directions: U, D, L, R
 dirs <- list(
-  U = c(-1,  0),
-  D = c( 1,  0),
-  L = c( 0, -1),
-  R = c( 0,  1)
+  U = c(-1, 0),
+  D = c(1, 0),
+  L = c(0, -1),
+  R = c(0, 1)
 )
 
 key <- function(r, c) paste0(r, ",", c)
@@ -33,12 +33,20 @@ build_junction_graph <- function(grid, start, prob) {
     r <- rc[1]
     c <- rc[2]
     ch <- grid[r, c]
-    if (ch == "#") return(character(0))
-    ds <- if (ch == "^") "U"
-      else if (ch == "v") "D"
-      else if (ch == "<") "L"
-      else if (ch == ">") "R"
-      else names(dirs)
+    if (ch == "#") {
+      return(character(0))
+    }
+    ds <- if (ch == "^") {
+      "U"
+    } else if (ch == "v") {
+      "D"
+    } else if (ch == "<") {
+      "L"
+    } else if (ch == ">") {
+      "R"
+    } else {
+      names(dirs)
+    }
     res <- character(0)
     for (d in ds) {
       dr <- dirs[[d]][1]
@@ -53,16 +61,21 @@ build_junction_graph <- function(grid, start, prob) {
   }
 
   is_junction <- function(r, c) {
-    if (grid[r, c] == "#") return(FALSE)
-    if (grid[r, c] %in% c("^", "v", "<", ">")) return(TRUE)
+    if (grid[r, c] == "#") {
+      return(FALSE)
+    }
+    if (grid[r, c] %in% c("^", "v", "<", ">")) {
+      return(TRUE)
+    }
     wall_neighbors <- 0
     for (d in names(dirs)) {
       dr <- dirs[[d]][1]
       dc <- dirs[[d]][2]
       r2 <- r + dr
       c2 <- c + dc
-      if (!inside(r2, c2) || grid[r2, c2] == "#")
+      if (!inside(r2, c2) || grid[r2, c2] == "#") {
         wall_neighbors <- wall_neighbors + 1
+      }
     }
     return(wall_neighbors != 2)
   }
@@ -103,7 +116,12 @@ build_junction_graph <- function(grid, start, prob) {
 
   graph <- igraph::make_empty_graph(n = length(junctions), directed = TRUE)
   graph <- igraph::set_vertex_attrs(graph, name = junctions, label = junctions)
-  graph <- igraph::add_edges(graph, edges, length = edges_len, label = edges_len)
+  graph <- igraph::add_edges(
+    graph,
+    edges,
+    length = edges_len,
+    label = edges_len
+  )
 
   # Prune the graph by removing single-direction nodes and nodes that can be
   # entered from 2 directions but only left from 1 (it's still single-direction
@@ -113,19 +131,28 @@ build_junction_graph <- function(grid, start, prob) {
     in_edges <- igraph::incident(graph, key, mode = "in")
     successors <- igraph::ends(graph, out_edges)[, 2]
     predecessors <- igraph::ends(graph, in_edges)[, 1]
-    if (length(successors) == 1
-        && length(predecessors) == 2
-        && successors %in% predecessors) {
+    if (
+      length(successors) == 1 &&
+        length(predecessors) == 2 &&
+        successors %in% predecessors
+    ) {
       in_edges <- in_edges[predecessors != successors]
       predecessors <- predecessors[predecessors != successors]
     }
-    if (length(successors) == 1 && length(predecessors) == 1
-        && successors != predecessors) {
+    if (
+      length(successors) == 1 &&
+        length(predecessors) == 1 &&
+        successors != predecessors
+    ) {
       edge1_len <- igraph::E(graph)[in_edges[1]]$length
       edge2_len <- igraph::E(graph)[out_edges[1]]$length
       new_edge_len <- edge1_len + edge2_len
-      graph <- igraph::add_edges(graph, c(predecessors, successors),
-        length = new_edge_len, label = new_edge_len)
+      graph <- igraph::add_edges(
+        graph,
+        c(predecessors, successors),
+        length = new_edge_len,
+        label = new_edge_len
+      )
       graph <- igraph::delete_vertices(graph, key)
     }
   }
@@ -141,9 +168,13 @@ longest_path_dag <- function(graph, start, end) {
   end_id <- match(key(end[1], end[2]), igraph::V(graph)$name)
   dist[start_id] <- 0
   for (u in topo) {
-    if (!is.finite(dist[u])) next
+    if (!is.finite(dist[u])) {
+      next
+    }
     out_edges <- igraph::incident(graph, igraph::V(graph)[u], mode = "out")
-    if (length(out_edges) == 0) next
+    if (length(out_edges) == 0) {
+      next
+    }
     targets <- igraph::ends(graph, out_edges, names = FALSE)[, 2]
     dist[targets] <-
       pmax(dist[targets], dist[u] + igraph::E(graph)[out_edges]$length)
@@ -193,13 +224,17 @@ longest_path <- function(graph, start, end) {
 
     # Done with this vertex, backtrack
     if (i > length(neighbors[[u]])) {
-      if (u != start_id) visited[u] <- FALSE
+      if (u != start_id) {
+        visited[u] <- FALSE
+      }
       next
     }
 
     st$push(list(vertex = u, neighbor = i + 1, len = fr$len))
     v <- neighbors[[u]][i]
-    if (visited[v]) next
+    if (visited[v]) {
+      next
+    }
 
     new_len <- fr$len + edge_lens[[u]][i]
     if (v == end_id) {

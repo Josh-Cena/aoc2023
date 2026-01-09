@@ -13,8 +13,12 @@ create_static_stack <- function(data) {
     parts <- strsplit(line, "~")[[1]]
     start <- as.numeric(unlist(strsplit(parts[1], ",")))
     end <- as.numeric(unlist(strsplit(parts[2], ",")))
-    list(start = start, end = end,
-      supported_by = integer(0), supports = integer(0))
+    list(
+      start = start,
+      end = end,
+      supported_by = integer(0),
+      supports = integer(0)
+    )
   })
   blocks <- blocks[order(sapply(blocks, function(x) x$start[3]))]
   order_by_top <- order(sapply(blocks, function(x) x$end[3]))

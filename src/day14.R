@@ -52,17 +52,22 @@ serialize_matrix <- function(mat) {
   flat <- c("." = 0, "O" = 1, "#" = 2)[flat]
   n <- length(flat)
   pad <- (3 - n %% 3) %% 3
-  if (pad > 0) flat <- c(flat, rep(0, pad))
+  if (pad > 0) {
+    flat <- c(flat, rep(0, pad))
+  }
   raw <- matrix(flat, ncol = 3, byrow = TRUE)
-  paste0(base64_alphabet[
-    bitwOr(
+  paste0(
+    base64_alphabet[
       bitwOr(
-        bitwShiftL(raw[, 1], 4),
-        bitwShiftL(raw[, 2], 2)
-      ),
-      raw[, 3]
-    )
-  ], collapse = "")
+        bitwOr(
+          bitwShiftL(raw[, 1], 4),
+          bitwShiftL(raw[, 2], 2)
+        ),
+        raw[, 3]
+      )
+    ],
+    collapse = ""
+  )
 }
 
 solve2 <- function(data) {

@@ -41,12 +41,15 @@ solve2 <- function(data) {
     if (is.null(box) || length(box) == 0) {
       return(0)
     }
-    return(sum(sapply(seq_along(box), function(j) {
-      if (is.null(box[[j]])) {
-        return(0)
-      }
-      return(j * box[[j]])
-    })) * i)
+    return(
+      sum(sapply(seq_along(box), function(j) {
+        if (is.null(box[[j]])) {
+          return(0)
+        }
+        return(j * box[[j]])
+      })) *
+        i
+    )
   })
   cat(sum(powers), "\n")
 }

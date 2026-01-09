@@ -13,8 +13,13 @@ neighbors <- function(w, h, node) {
     if (node$dir == ndir && node$steps == 3) {
       next
     }
-    if (node$dir == 1 && ndir == 3 || node$dir == 3 && ndir == 1 ||
-        node$dir == 2 && ndir == 4 || node$dir == 4 && ndir == 2) {
+    if (
+      node$dir == 1 &&
+        ndir == 3 ||
+        node$dir == 3 && ndir == 1 ||
+        node$dir == 2 && ndir == 4 ||
+        node$dir == 4 && ndir == 2
+    ) {
       # Can't turn 180 degrees
       next
     }
@@ -40,8 +45,13 @@ neighbors_ultra <- function(w, h, node) {
     if (node$dir == ndir && node$steps == 10) {
       next
     }
-    if (node$dir == 1 && ndir == 3 || node$dir == 3 && ndir == 1 ||
-        node$dir == 2 && ndir == 4 || node$dir == 4 && ndir == 2) {
+    if (
+      node$dir == 1 &&
+        ndir == 3 ||
+        node$dir == 3 && ndir == 1 ||
+        node$dir == 2 && ndir == 4 ||
+        node$dir == 4 && ndir == 2
+    ) {
       # Can't turn 180 degrees
       next
     }
@@ -68,10 +78,12 @@ dijkstra <- function(mat, neighbors_cb, max_steps) {
   pq <- priority_queue()
   pq$push(
     list(i = 1, j = 2, dir = 1, steps = 1, cost = mat[[1, 2]]),
-    priority = -mat[[1, 2]])
+    priority = -mat[[1, 2]]
+  )
   pq$push(
     list(i = 2, j = 1, dir = 2, steps = 1, cost = mat[[2, 1]]),
-    priority = -mat[[2, 1]])
+    priority = -mat[[2, 1]]
+  )
   while (pq$size() > 0) {
     u <- pq$pop()
     for (v in neighbors_cb(width, height, u)) {
@@ -80,7 +92,8 @@ dijkstra <- function(mat, neighbors_cb, max_steps) {
         dist[v$i, v$j, v$dir, v$steps] <- new_cost
         pq$push(
           list(i = v$i, j = v$j, dir = v$dir, steps = v$steps, cost = new_cost),
-          priority = -new_cost)
+          priority = -new_cost
+        )
       }
     }
   }

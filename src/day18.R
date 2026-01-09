@@ -44,8 +44,11 @@ solve <- function(dirs, dists) {
   # col 2 -> min_c, col 3 -> min_c + 1,
   # col 4 -> all_c[2], col 5 -> all_c[2] + 1, ...
   # col n - 1 -> max_c, col n -> max_c + 1
-  mat <- matrix(FALSE, nrow = length(all_r) * 2 + 1,
-          ncol = length(all_c) * 2 + 1)
+  mat <- matrix(
+    FALSE,
+    nrow = length(all_r) * 2 + 1,
+    ncol = length(all_c) * 2 + 1
+  )
   cur_r <- 1
   cur_c <- 1
   for (i in seq_along(dirs)) {
@@ -71,8 +74,14 @@ solve <- function(dirs, dists) {
       next_pos <- pos + dir_to_diff[[dir]]
       r <- next_pos[1]
       c <- next_pos[2]
-      if (r >= 1 && r <= nrow(mat) && c >= 1 && c <= ncol(mat)
-          && !mat[r, c] && !visited[r, c]) {
+      if (
+        r >= 1 &&
+          r <= nrow(mat) &&
+          c >= 1 &&
+          c <= ncol(mat) &&
+          !mat[r, c] &&
+          !visited[r, c]
+      ) {
         # We need the area represented by this cell.
         # Each cell's index corresponds to its top-left corner's coordinates.
         r_decompressed <- r_decompressor[[r]]

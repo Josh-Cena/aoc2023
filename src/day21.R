@@ -11,8 +11,14 @@ bfs <- function(mat, start) {
       next_pos <- pos + dir
       nx <- next_pos[1]
       ny <- next_pos[2]
-      if (nx >= 1 && nx <= nrow(mat) && ny >= 1 && ny <= ncol(mat) &&
-          !walkable[nx, ny] && mat[nx, ny] != "#") {
+      if (
+        nx >= 1 &&
+          nx <= nrow(mat) &&
+          ny >= 1 &&
+          ny <= ncol(mat) &&
+          !walkable[nx, ny] &&
+          mat[nx, ny] != "#"
+      ) {
         walkable[nx, ny] <- TRUE
         q$push(next_pos)
       }
@@ -105,9 +111,10 @@ solve2 <- function(data) {
   even_corners_in_mat <- as.bigz(sum(is_corner & is_even & walkable))
   odd_corners_in_mat <- as.bigz(sum(is_corner & !is_even & walkable))
   mat_radius <- as.bigz((26501365 - (w - 1) / 2) / w)
-  total <- odd_cells_in_mat * (mat_radius + 1)^2 +
-            even_cells_in_mat * mat_radius^2 +
-            even_corners_in_mat * mat_radius -
-            odd_corners_in_mat * (mat_radius + 1)
+  total <- odd_cells_in_mat *
+    (mat_radius + 1)^2 +
+    even_cells_in_mat * mat_radius^2 +
+    even_corners_in_mat * mat_radius -
+    odd_corners_in_mat * (mat_radius + 1)
   cat(as.character(total), "\n")
 }

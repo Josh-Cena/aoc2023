@@ -19,9 +19,11 @@ in_range <- function(val, range) {
 }
 
 cross <- function(v1, v2) {
-  return(c(v1[2] * v2[3] - v1[3] * v2[2],
-            v1[3] * v2[1] - v1[1] * v2[3],
-            v1[1] * v2[2] - v1[2] * v2[1]))
+  return(c(
+    v1[2] * v2[3] - v1[3] * v2[2],
+    v1[3] * v2[1] - v1[1] * v2[3],
+    v1[1] * v2[2] - v1[2] * v2[1]
+  ))
 }
 
 solve1 <- function(data) {
@@ -33,8 +35,11 @@ solve1 <- function(data) {
       l1 <- hails[[i]]
       l2 <- hails[[j]]
       sol <- intersection2d(l1, l2)
-      if (!is.null(sol) && in_range(sol[1], test_area)
-          && in_range(sol[2], test_area)) {
+      if (
+        !is.null(sol) &&
+          in_range(sol[1], test_area) &&
+          in_range(sol[2], test_area)
+      ) {
         total <- total + 1
       }
     }

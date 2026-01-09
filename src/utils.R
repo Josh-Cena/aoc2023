@@ -1,6 +1,8 @@
 quicksort <- function(x, compare) {
   n <- length(x)
-  if (n <= 1) return(x)
+  if (n <= 1) {
+    return(x)
+  }
 
   pivot <- x[[1]]
   less <- list()

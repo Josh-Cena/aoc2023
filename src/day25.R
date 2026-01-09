@@ -5,8 +5,10 @@ solve1 <- function(data) {
   nodes <- unique(c(nodes, unlist(targets)))
   graph <- igraph::make_empty_graph(n = length(nodes), directed = FALSE)
   for (i in seq_along(targets)) {
-    graph <- igraph::add_edges(graph,
-      unlist(sapply(targets[[i]], function(x) c(i, match(x, nodes)))))
+    graph <- igraph::add_edges(
+      graph,
+      unlist(sapply(targets[[i]], function(x) c(i, match(x, nodes))))
+    )
   }
   igraph::V(graph)$label <- nodes
   dgr <- DiagrammeR::from_igraph(graph)

@@ -3,7 +3,9 @@ solve1 <- function(data) {
   for (i in seq_along(data)) {
     match_res <- gregexpr("[0-9]+", data[i])
     matches <- match_res[[1]]
-    if (matches[1] == -1) next
+    if (matches[1] == -1) {
+      next
+    }
     starts <- as.integer(matches)
     values <- regmatches(data[i], match_res)[[1]]
     lengths <- nchar(values)
@@ -42,7 +44,9 @@ solve2 <- function(data) {
   for (i in seq_along(data)) {
     match_res <- gregexpr("[0-9]+", data[i])
     matches <- match_res[[1]]
-    if (matches[1] == -1) next
+    if (matches[1] == -1) {
+      next
+    }
     starts <- as.integer(matches)
     values <- regmatches(data[i], match_res)[[1]]
     lengths <- nchar(values)
@@ -83,7 +87,6 @@ solve2 <- function(data) {
       }
     }
   }
-  sum <- sum(sapply(neighbors,
-    function(x) if (length(x) == 2) prod(x) else 0))
+  sum <- sum(sapply(neighbors, function(x) if (length(x) == 2) prod(x) else 0))
   cat(sum, "\n")
 }

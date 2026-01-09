@@ -20,9 +20,9 @@ solve1 <- function(data) {
   total <- 0
   for (i in seq_along(lines)) {
     line <- lines[[i]]
-    if (all(line["red", ] <= 12
-        & line["green", ] <= 13
-        & line["blue", ] <= 14)) {
+    if (
+      all(line["red", ] <= 12 & line["green", ] <= 13 & line["blue", ] <= 14)
+    ) {
       total <- total + i
     }
   }
@@ -32,9 +32,11 @@ solve1 <- function(data) {
 solve2 <- function(data) {
   lines <- sapply(data, parse_line)
   powers <- sapply(lines, function(line) {
-    return(max(unlist(line["red", ]))
-      * max(unlist(line["green", ]))
-      * max(unlist(line["blue", ])))
+    return(
+      max(unlist(line["red", ])) *
+        max(unlist(line["green", ])) *
+        max(unlist(line["blue", ]))
+    )
   })
   cat(sum(powers), "\n")
 }
