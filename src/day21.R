@@ -2,7 +2,7 @@ library("gmp", include.only = "as.bigz")
 library("collections", include.only = "queue")
 
 bfs <- function(mat, start) {
-  walkable <- matrix(FALSE, nrow(mat), ncol(mat))
+  reachable <- matrix(FALSE, nrow(mat), ncol(mat))
   q <- queue()
   q$push(start)
   while (q$size() > 0) {
@@ -16,15 +16,15 @@ bfs <- function(mat, start) {
           nx <= nrow(mat) &&
           ny >= 1 &&
           ny <= ncol(mat) &&
-          !walkable[nx, ny] &&
+          !reachable[nx, ny] &&
           mat[nx, ny] != "#"
       ) {
-        walkable[nx, ny] <- TRUE
+        reachable[nx, ny] <- TRUE
         q$push(next_pos)
       }
     }
   }
-  return(walkable)
+  reachable
 }
 
 # Picture all cells we can reach within T steps as a diamond of radius T.
@@ -41,13 +41,12 @@ solve1 <- function(data) {
   mat <- t(as.matrix(sapply(strsplit(data, ""), unlist)))
   start <- which(mat == "S", arr.ind = TRUE)
   mat[start] <- "."
-  is_even <- (row(mat) - start[1] + col(mat) - start[2]) %% 2 == 0
+  dist <- abs(row(mat) - start[1]) + abs(col(mat) - start[2])
   # Sadly, we actually have to run BFS instead of doing mat == "."
   # There are some holes in the field that are fully surrounded by rocks,
   # and not actually reachable.
-  walkable <- bfs(mat, start)
-  reachable_in_64 <- (abs(row(mat) - start[1]) + abs(col(mat) - start[2])) <= 64
-  res <- sum(walkable & is_even & reachable_in_64)
+  reachable <- bfs(mat, start)
+  res <- sum(reachable & (dist <= 64) & (dist %% 2 == 0))
   cat(res, "\n")
 }
 
@@ -66,7 +65,7 @@ solve1 <- function(data) {
 # full generality (especially because when the corner of the diamond just passed
 # the matrix's center--neither the included part nor than the excluded part is
 # a triangle!). However, the problem is too nicely structured:
-# 26501365 = 65 * 131 * 202300, meaning we just travel 202300 matrices after
+# 26501365 = 65 + 131 * 202300, meaning we just travel 202300 matrices after
 # reaching the edge of the starting matrix.
 # This means that the final diamond actually touches the four edges. Here's
 # one such corner of the diamond, where 0 represents an even matrix and 1
@@ -103,13 +102,14 @@ solve2 <- function(data) {
   w <- nrow(mat)
   start <- which(mat == "S", arr.ind = TRUE)
   mat[start] <- "."
-  is_even <- (row(mat) - start[1] + col(mat) - start[2]) %% 2 == 0
-  walkable <- bfs(mat, start)
-  is_corner <- abs(row(mat) - start[1]) + abs(col(mat) - start[2]) >= start[1]
-  even_cells_in_mat <- as.bigz(sum(is_even & walkable))
-  odd_cells_in_mat <- as.bigz(sum(!is_even & walkable))
-  even_corners_in_mat <- as.bigz(sum(is_corner & is_even & walkable))
-  odd_corners_in_mat <- as.bigz(sum(is_corner & !is_even & walkable))
+  dist <- abs(row(mat) - start[1]) + abs(col(mat) - start[2])
+  is_even <- dist %% 2 == 0
+  is_corner <- dist >= start[1]
+  reachable <- bfs(mat, start)
+  even_cells_in_mat <- as.bigz(sum(is_even & reachable))
+  odd_cells_in_mat <- as.bigz(sum(!is_even & reachable))
+  even_corners_in_mat <- as.bigz(sum(is_corner & is_even & reachable))
+  odd_corners_in_mat <- as.bigz(sum(is_corner & !is_even & reachable))
   mat_radius <- as.bigz((26501365 - (w - 1) / 2) / w)
   total <- odd_cells_in_mat *
     (mat_radius + 1)^2 +

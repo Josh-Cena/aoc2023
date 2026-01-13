@@ -1,4 +1,5 @@
 library("gmp", include.only = "as.bigz")
+library("collections", include.only = "stack", warn.conflicts = FALSE)
 
 parse_rule <- function(rule) {
   parts <- strsplit(rule, "{", fixed = TRUE)[[1]]
@@ -11,7 +12,7 @@ parse_rule <- function(rule) {
     d <- strsplit(d, ":")[[1]]
     list(cond = d[1], target = d[2])
   })
-  return(list(name = name, dests = t(as.data.frame(dests))))
+  list(name = name, dests = t(as.data.frame(dests)))
 }
 
 parse_rating <- function(rating) {
@@ -20,7 +21,7 @@ parse_rating <- function(rating) {
   for (part in strsplit(rating, "=")) {
     res[[part[1]]] <- as.numeric(part[2])
   }
-  return(res)
+  res
 }
 
 apply_rule <- function(rule, rating) {
@@ -30,8 +31,7 @@ apply_rule <- function(rule, rating) {
       return(dest$target)
     }
   }
-  # Unreachable
-  return(NULL)
+  stop("No rule matched")
 }
 
 solve1 <- function(data) {
@@ -48,7 +48,7 @@ solve1 <- function(data) {
       rule <- rules[[current]]
       current <- apply_rule(rule, r)
     }
-    return(current == "A")
+    current == "A"
   })
   accepted <- ratings[res]
   cat(sum(unlist(accepted)), "\n")
@@ -59,20 +59,20 @@ negate_cond <- function(cond) {
   op <- substr(cond, 2, 2)
   k <- as.integer(substr(cond, 3, nchar(cond)))
   if (op == "<") {
-    return(paste0(var, ">", k - 1))
+    paste0(var, ">", k - 1)
   } else if (op == ">") {
-    return(paste0(var, "<", k + 1))
+    paste0(var, "<", k + 1)
   }
 }
 
 get_paths <- function(rules) {
   paths <- list()
   out_i <- 0
-  stack <- list(list(node = "A", path = NULL, visited = "A"))
+  stk <- stack()
+  stk$push(list(node = "A", path = NULL, visited = "A"))
 
-  while (length(stack) > 0) {
-    st <- stack[[length(stack)]]
-    stack[[length(stack)]] <- NULL
+  while (stk$size() > 0) {
+    st <- stk$pop()
     node <- st$node
     if (st$node == "in") {
       out_i <- out_i + 1
@@ -90,24 +90,24 @@ get_paths <- function(rules) {
       }
       edge_list <- node_rules[[s]]
       for (conds in edge_list) {
-        stack[[length(stack) + 1L]] <- list(
+        stk$push(list(
           node = s,
           path = c(st$path, conds),
           visited = c(st$visited, s)
-        )
+        ))
       }
     }
   }
 
-  return(paths)
+  paths
 }
 
 get_cube <- function(inequalities) {
   ranges <- list(
-    "x" = c(1, 4000),
-    "m" = c(1, 4000),
-    "a" = c(1, 4000),
-    "s" = c(1, 4000),
+    x = c(1, 4000),
+    m = c(1, 4000),
+    a = c(1, 4000),
+    s = c(1, 4000),
     sign = 1
   )
   for (ineq in inequalities) {
@@ -120,10 +120,10 @@ get_cube <- function(inequalities) {
       ranges[[var]][1] <- max(ranges[[var]][1], value + 1)
     }
     if (ranges[[var]][1] > ranges[[var]][2]) {
-      print(ranges[[var]])
+      stop("Invalid cube")
     }
   }
-  return(ranges)
+  ranges
 }
 
 intersect_cubes <- function(cube1, cube2, sign) {
@@ -138,26 +138,26 @@ intersect_cubes <- function(cube1, cube2, sign) {
   if (x1 > x2 || m1 > m2 || a1 > a2 || s1 > s2) {
     return(NULL)
   }
-  return(list(
+  list(
     x = c(x1, x2),
     m = c(m1, m2),
     a = c(a1, a2),
     s = c(s1, s2),
     sign = sign
-  ))
+  )
 }
 
 add_cube <- function(cube, cubes) {
   new_cubes <- cubes
-  new_cubes[[length(new_cubes) + 1]] <- cube
+  new_cubes <- push(new_cubes, cube)
   for (c in cubes) {
     intersection <- intersect_cubes(cube, c, -c$sign)
     if (is.null(intersection)) {
       next
     }
-    new_cubes[[length(new_cubes) + 1]] <- intersection
+    new_cubes <- push(new_cubes, intersection)
   }
-  return(new_cubes)
+  new_cubes
 }
 
 solve2 <- function(data) {

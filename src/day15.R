@@ -1,10 +1,10 @@
 string_hash <- function(s) {
+  codes <- as.integer(charToRaw(s))
   res <- 0
-  for (i in seq_len(nchar(s))) {
-    ch <- as.integer(charToRaw(substring(s, i, i)))
+  for (ch in codes) {
     res <- ((res + ch) * 17) %% 256
   }
-  return(res)
+  res
 }
 
 solve1 <- function(data) {
@@ -18,7 +18,7 @@ solve2 <- function(data) {
   line <- data[[1]]
   parts <- strsplit(line, ",")[[1]]
   # A list of lists, each inner list is a mapping of label to focal length
-  boxes <- vector("list", 256)
+  boxes <- replicate(256, list(), simplify = FALSE)
   for (part in parts) {
     label <- gsub("[-=].*", "", part)
     label_hash <- string_hash(label)
@@ -26,30 +26,14 @@ solve2 <- function(data) {
     op <- gsub("[^-=]", "", part)
     if (op == "=") {
       focal_length <- as.numeric(gsub(".*=", "", part))
-      if (is.null(boxes[[ind]])) {
-        boxes[[ind]] <- list()
-      }
       boxes[[ind]][[label]] <- focal_length
     } else {
-      if (!is.null(boxes[[ind]])) {
-        boxes[[ind]][[label]] <- NULL
-      }
+      boxes[[ind]][[label]] <- NULL
     }
   }
   powers <- sapply(seq_along(boxes), function(i) {
     box <- boxes[[i]]
-    if (is.null(box) || length(box) == 0) {
-      return(0)
-    }
-    return(
-      sum(sapply(seq_along(box), function(j) {
-        if (is.null(box[[j]])) {
-          return(0)
-        }
-        return(j * box[[j]])
-      })) *
-        i
-    )
+    i * sum(unlist(box) * seq_along(box))
   })
   cat(sum(powers), "\n")
 }

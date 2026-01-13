@@ -1,4 +1,3 @@
-library("DiagrammeR")
 library("collections", include.only = "queue")
 library("gmp", include.only = c("as.bigz", "lcm.bigz"))
 
@@ -7,6 +6,7 @@ make_pulse <- function(node, level, from) {
 }
 
 build_graph <- function(data) {
+  graph <- igraph::make_empty_graph(n = length(data), directed = TRUE)
   parts <- strsplit(data, " -> ")
   nodes <- sapply(parts, function(x) x[1])
   node_types <- sapply(nodes, function(x) {
@@ -23,154 +23,129 @@ build_graph <- function(data) {
       substr(x, 2, nchar(x))
     }
   })
-  targets <- lapply(parts, function(x) strsplit(x[2], ", ")[[1]])
-  for (target in unlist(targets)) {
-    if (!(target %in% node_labels)) {
-      node_labels <- c(node_labels, target)
-      node_types <- c(node_types, "")
+  for (i in seq_along(parts)) {
+    graph <- igraph::set_vertex_attr(graph, "type", i, node_types[i])
+    graph <- igraph::set_vertex_attr(graph, "label", i, node_labels[i])
+    if (node_types[i] == "%") {
+      graph <- igraph::set_vertex_attr(graph, "state", i, FALSE)
+    } else if (node_types[i] == "&") {
+      # A bitset, each bit corresponds to one input
+      graph <- igraph::set_vertex_attr(graph, "state", i, 0)
     }
-  }
-  edges_from <- unlist(lapply(seq_along(targets), function(i) {
-    rep(node_labels[[i]], length(targets[[i]]))
-  }))
-  targets <- unlist(targets)
-  edges_from <- match(edges_from, node_labels)
-  targets <- match(targets, node_labels)
-  nodes <- create_node_df(
-    n = length(node_labels),
-    label = node_labels,
-    type = node_types,
-    color = c("black", "blue", "green", "red")[
-      match(node_types, c("broadcaster", "%", "&", ""))
-    ],
-    width = 0.25,
-    height = 0.25
-  )
-  edges <- create_edge_df(
-    from = edges_from,
-    to = targets
-  )
-  graph <- create_graph(nodes_df = nodes, edges_df = edges)
-  flip_flop_states <- rep(FALSE, length(node_labels))
-  conjunction_states <- list()
-  for (i in seq_along(node_labels)) {
-    if (node_types[i] == "&") {
-      conjunction_states[[i]] <- list()
-      for (nbr in get_predecessors(graph, i)) {
-        conjunction_states[[i]][[nbr]] <- "low"
+    targets <- strsplit(parts[[i]][2], ", ")[[1]]
+    for (target in targets) {
+      if (!(target %in% node_labels)) {
+        node_labels <- c(node_labels, target)
+        graph <- igraph::add_vertices(graph, 1, type = "", label = target)
       }
+      graph <- igraph::add_edges(graph, c(i, match(target, node_labels)))
     }
   }
-  return(list(
-    graph = graph,
-    flip_flop_states = flip_flop_states,
-    conjunction_states = conjunction_states
-  ))
+  graph
 }
 
-push_btn <- function(
-  graph,
-  flip_flop_states,
-  conjunction_states,
-  track_inputs = NULL
-) {
-  nodes <- get_node_df(graph)
-  broadcaster <- nodes[nodes$label == "broadcaster", "id"]
-  nbrs <- get_successors(graph, broadcaster)
+push_btn <- function(graph, broadcaster, track_inputs = NULL) {
+  nbrs <- igraph::neighbors(graph, broadcaster, "out")
   q <-
-    queue(items = lapply(nbrs, function(x) make_pulse(x, "low", broadcaster)))
+    queue(items = lapply(nbrs, function(x) make_pulse(x, FALSE, broadcaster)))
   # Include 1 from the button to the broadcaster
   low_pulses <- length(nbrs) + 1
   high_pulses <- 0
   inputs <- list()
   while (q$size() > 0) {
     pulse <- q$pop()
-    node_type <- nodes[pulse$node, "type"]
-    new_level <- ""
+    node_type <- igraph::vertex_attr(graph, "type", pulse$node)
+    out_level <- NULL
     if (node_type == "%") {
-      if (pulse$level == "high") {
+      if (pulse$level == TRUE) {
         next
       }
-      flip_flop_states[pulse$node] <- !flip_flop_states[pulse$node]
-      new_level <- if (flip_flop_states[pulse$node]) "high" else "low"
+      cur_st <- igraph::vertex_attr(graph, "state", pulse$node)
+      cur_st <- !cur_st
+      graph <- igraph::set_vertex_attr(graph, "state", pulse$node, cur_st)
+      out_level <- cur_st
     } else if (node_type == "&") {
-      conjunction_states[[pulse$node]][[pulse$from]] <- pulse$level
-      if (all(unlist(conjunction_states[[pulse$node]]) == "high")) {
-        new_level <- "low"
+      cur_st <- igraph::vertex_attr(graph, "state", pulse$node)
+      node_inputs <- igraph::neighbors(graph, pulse$node, "in")
+      from_ind <- match(pulse$from, node_inputs)
+      if (pulse$level == TRUE) {
+        cur_st <- bitwOr(cur_st, bitwShiftL(1L, from_ind - 1))
       } else {
-        new_level <- "high"
+        cur_st <- bitwAnd(cur_st, bitwNot(bitwShiftL(1L, from_ind - 1)))
       }
+      graph <- igraph::set_vertex_attr(graph, "state", pulse$node, cur_st)
+      out_level <- cur_st != bitwShiftL(1L, length(node_inputs)) - 1
     }
-    if (new_level != "") {
-      nbrs <- get_successors(graph, pulse$node)
+    if (!is.null(out_level)) {
+      nbrs <- igraph::neighbors(graph, pulse$node, "out")
       for (nbr in nbrs) {
-        new_pulse <- make_pulse(nbr, new_level, pulse$node)
+        new_pulse <- make_pulse(nbr, out_level, pulse$node)
         q$push(new_pulse)
-        if (nbr %in% track_inputs) {
-          key <- as.character(pulse$node)
+        if (!is.null(track_inputs) && track_inputs == nbr) {
+          key <- igraph::vertex_attr(graph, "label", pulse$node)
           if (!(key %in% names(inputs))) {
-            inputs[[key]] <- character(0)
+            inputs[[key]] <- c()
           }
-          inputs[[key]] <- c(inputs[[key]], new_level)
+          inputs[[key]] <- c(inputs[[key]], out_level)
         }
       }
-      if (new_level == "high") {
+      if (out_level) {
         high_pulses <- high_pulses + length(nbrs)
       } else {
         low_pulses <- low_pulses + length(nbrs)
       }
     }
   }
-  return(list(
-    low_pulses = low_pulses,
-    high_pulses = high_pulses,
-    flip_flop_states = flip_flop_states,
-    conjunction_states = conjunction_states,
-    inputs = inputs
-  ))
+  list(graph = graph, pulses = c(low_pulses, high_pulses), inputs = inputs)
 }
 
 solve1 <- function(data) {
-  graph_data <- build_graph(data)
-  graph <- graph_data$graph
-  flip_flop_states <- graph_data$flip_flop_states
-  conjunction_states <- graph_data$conjunction_states
-  export_graph(graph, file_name = "src/day20.png")
+  graph <- build_graph(data)
+  broadcaster <- which(igraph::vertex_attr(graph, "label") == "broadcaster")
+  dgr <- DiagrammeR::from_igraph(graph)
+  dgr <- DiagrammeR::set_node_attrs(dgr, "width", 0.25)
+  dgr <- DiagrammeR::set_node_attrs(dgr, "height", 0.25)
+  dgr <- DiagrammeR::set_node_attrs(
+    dgr,
+    "color",
+    c("black", "blue", "green", "red")[
+      match(igraph::vertex_attr(graph, "type"), c("broadcaster", "%", "&", ""))
+    ]
+  )
+  DiagrammeR::export_graph(dgr, file_name = "src/day20.png")
 
-  high_pulses <- rep(as.bigz(0), 1000)
-  low_pulses <- rep(as.bigz(0), 1000)
+  pulses <- c(as.bigz(0), as.bigz(0))
   for (i in 1:1000) {
-    result <- push_btn(graph, flip_flop_states, conjunction_states)
-    flip_flop_states <- result$flip_flop_states
-    conjunction_states <- result$conjunction_states
-    high_pulses[i] <- as.bigz(result$high_pulses)
-    low_pulses[i] <- as.bigz(result$low_pulses)
+    result <- push_btn(graph, broadcaster)
+    graph <- result$graph
+    pulses <- pulses + as.bigz(result$pulses)
   }
-  cat(as.character(sum(high_pulses) * sum(low_pulses)), "\n")
+  cat(as.character(pulses[1] * pulses[2]), "\n")
 }
 
 # Key observation from day20.png: rx comes a single conjunction of four other
 # conjunctions. We need each conjunction to send a single high pulse
 solve2 <- function(data) {
-  graph_data <- build_graph(data)
-  graph <- graph_data$graph
-  flip_flop_states <- graph_data$flip_flop_states
-  conjunction_states <- graph_data$conjunction_states
-  nodes <- get_node_df(graph)
-  rx_parents <- get_predecessors(graph, which(nodes$label == "rx"))
-  rx_grandparents <- sapply(rx_parents, function(x) {
-    get_predecessors(graph, x)
-  })
+  graph <- build_graph(data)
+  broadcaster <- which(igraph::vertex_attr(graph, "label") == "broadcaster")
+  rx_parent <- igraph::neighbors(
+    graph,
+    which(igraph::vertex_attr(graph, "label") == "rx"),
+    "in"
+  )
+  if (length(rx_parent) != 1) {
+    stop("Expected exactly one parent of rx")
+  }
+  rx_grandparents <- igraph::neighbors(graph, rx_parent, "in")
   first_time_single_high <- list()
   i <- 1
   repeat {
-    result <- push_btn(graph, flip_flop_states, conjunction_states, rx_parents)
-    flip_flop_states <- result$flip_flop_states
-    conjunction_states <- result$conjunction_states
+    result <- push_btn(graph, broadcaster, rx_parent)
+    graph <- result$graph
     inputs <- result$inputs
     for (p in rx_grandparents) {
-      key <- as.character(p)
-      if (sum(inputs[[key]] == "high") == 1) {
+      key <- igraph::vertex_attr(graph, "label", p)
+      if (sum(inputs[[key]]) == 1) {
         if (!(key %in% names(first_time_single_high))) {
           first_time_single_high[[key]] <- as.bigz(i)
         }
@@ -181,5 +156,5 @@ solve2 <- function(data) {
     }
     i <- i + 1
   }
-  cat(as.character(reduce(first_time_single_high, lcm.bigz)), "\n")
+  cat(as.character(Reduce(lcm.bigz, first_time_single_high)), "\n")
 }

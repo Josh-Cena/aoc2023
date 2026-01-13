@@ -1,4 +1,8 @@
-library("collections", include.only = "stack")
+library(
+  "collections",
+  include.only = c("stack", "queue"),
+  warn.conflicts = FALSE
+)
 
 # directions: U, D, L, R
 dirs <- list(
@@ -20,9 +24,8 @@ export_graph <- function(graph, file_name) {
   DiagrammeR::export_graph(dgr, file_name = file_name)
 }
 
-# A junction is a cell with wall neighbor number != 2,
-# or a slope.
-build_junction_graph <- function(grid, start, prob) {
+# A junction is a cell with wall neighbor number != 2 or a slope.
+build_junction_graph <- function(grid, start) {
   nr <- nrow(grid)
   nc <- ncol(grid)
 
@@ -57,7 +60,7 @@ build_junction_graph <- function(grid, start, prob) {
         res <- c(res, key(r2, c2))
       }
     }
-    return(res)
+    res
   }
 
   is_junction <- function(r, c) {
@@ -77,7 +80,7 @@ build_junction_graph <- function(grid, start, prob) {
         wall_neighbors <- wall_neighbors + 1
       }
     }
-    return(wall_neighbors != 2)
+    wall_neighbors != 2
   }
 
   junctions <- character(0)
@@ -88,7 +91,7 @@ build_junction_graph <- function(grid, start, prob) {
   }
 
   edges <- character(0)
-  edges_len <- integer(0)
+  edge_len <- integer(0)
 
   for (u in junctions) {
     for (v0 in out_neighbors(u)) {
@@ -100,7 +103,7 @@ build_junction_graph <- function(grid, start, prob) {
         # Reached another junction
         if (cur %in% junctions) {
           edges <- c(edges, u, cur)
-          edges_len <- c(edges_len, dist)
+          edge_len <- c(edge_len, dist)
           break
         }
         nexts <- out_neighbors(cur)
@@ -116,12 +119,7 @@ build_junction_graph <- function(grid, start, prob) {
 
   graph <- igraph::make_empty_graph(n = length(junctions), directed = TRUE)
   graph <- igraph::set_vertex_attrs(graph, name = junctions, label = junctions)
-  graph <- igraph::add_edges(
-    graph,
-    edges,
-    length = edges_len,
-    label = edges_len
-  )
+  graph <- igraph::add_edges(graph, edges, length = edge_len, label = edge_len)
 
   # Prune the graph by removing single-direction nodes and nodes that can be
   # entered from 2 directions but only left from 1 (it's still single-direction
@@ -156,16 +154,12 @@ build_junction_graph <- function(grid, start, prob) {
       graph <- igraph::delete_vertices(graph, key)
     }
   }
-  return(graph)
+  graph
 }
 
-longest_path_dag <- function(graph, start, end) {
-  # It's a DAG with a chessboard pattern!
-  export_graph(graph, "src/day23_1.png")
+longest_path_dag <- function(graph, start_id, end_id) {
   topo <- igraph::topo_sort(graph, mode = "out")
   dist <- rep(-Inf, igraph::vcount(graph))
-  start_id <- match(key(start[1], start[2]), igraph::V(graph)$name)
-  end_id <- match(key(end[1], end[2]), igraph::V(graph)$name)
   dist[start_id] <- 0
   for (u in topo) {
     if (!is.finite(dist[u])) {
@@ -183,16 +177,11 @@ longest_path_dag <- function(graph, start, end) {
   dist[end_id]
 }
 
-longest_path <- function(graph, start, end) {
-  graph <- igraph::as_undirected(graph, edge.attr.comb = "first")
-  export_graph(graph, "src/day23_2.png")
-  start_id <- match(key(start[1], start[2]), igraph::V(graph)$name)
-  end_id <- match(key(end[1], end[2]), igraph::V(graph)$name)
+longest_path <- function(graph, start_id, end_id) {
   # Get adjacency list for DFS
   el <- igraph::as_edgelist(graph, names = FALSE)
   e_len <- igraph::edge_attr(graph, "length")
   n <- igraph::vcount(graph)
-  m <- nrow(el)
 
   neighbors <- vector("list", n)
   edge_lens <- vector("list", n)
@@ -201,7 +190,8 @@ longest_path <- function(graph, start, end) {
     edge_lens[[i]] <- numeric(0)
   }
 
-  for (k in seq_len(m)) {
+  # Order the neighbors by edge length so that longer edges are explored first
+  for (k in order(e_len, decreasing = TRUE)) {
     u <- el[k, 1]
     v <- el[k, 2]
     w <- e_len[k]
@@ -209,6 +199,42 @@ longest_path <- function(graph, start, end) {
     edge_lens[[u]] <- c(edge_lens[[u]], w)
     neighbors[[v]] <- c(neighbors[[v]], u)
     edge_lens[[v]] <- c(edge_lens[[v]], w)
+  }
+
+  # Because this is a grid graph, if we are at the edge of the graph, we have
+  # to travel *towards* the end and never *away* from it, or we'll trap
+  # ourselves. So we can precompute the distance (in number of edges) from
+  # each node on the graph edge to the end, and if we are at a node with
+  # distance d, we can only travel to neighbors with distance < d.
+  edge_node_dist_to_end <- rep(Inf, n)
+  visited <- rep(FALSE, n)
+  q <- queue()
+  q$push(end_id)
+  edge_node_dist_to_end[end_id] <- 0
+  visited[end_id] <- TRUE
+  while (q$size() > 0) {
+    u <- q$pop()
+    for (i in seq_along(neighbors[[u]])) {
+      v <- neighbors[[u]][i]
+      if (length(neighbors[[v]]) == 4 || visited[v]) {
+        # Not an edge node
+        next
+      }
+      visited[v] <- TRUE
+      edge_node_dist_to_end[v] <- edge_node_dist_to_end[u] + 1
+      q$push(v)
+    }
+  }
+
+  # The upper bound of the remaining path length is given by
+  # 1/2 * (best1[u] + best1[e] +
+  # sum(best2[v] for v in (nodes - visited - {u, e})))
+  # If curBest - curLen > upper bound, we can stop searching this path.
+  best1 <- rep(-Inf, n)
+  best2 <- rep(-Inf, n)
+  for (u in seq_len(n)) {
+    best1[u] <- edge_lens[[u]][1]
+    best2[u] <- if (length(edge_lens[[u]]) > 1) sum(edge_lens[[u]][1:2]) else 0
   }
 
   # Literally just DFS
@@ -235,14 +261,31 @@ longest_path <- function(graph, start, end) {
     if (visited[v]) {
       next
     }
+    # We are traveling away from the end, which would trap ourselves
+    if (
+      is.finite(edge_node_dist_to_end[v]) &&
+        is.finite(edge_node_dist_to_end[u]) &&
+        edge_node_dist_to_end[v] >= edge_node_dist_to_end[u]
+    ) {
+      next
+    }
 
     new_len <- fr$len + edge_lens[[u]][i]
     if (v == end_id) {
-      if (new_len > max_len) max_len <- new_len
-    } else {
-      visited[v] <- TRUE
-      st$push(list(vertex = v, neighbor = 1, len = new_len))
+      max_len <- max(max_len, new_len)
+      next
     }
+    remaining_upper_bound <- (best1[v] +
+      best1[end_id] +
+      sum(best2[
+        !visited & seq_along(best2) != v & seq_along(best2) != end_id
+      ])) /
+      2
+    if (new_len + remaining_upper_bound <= max_len) {
+      next
+    }
+    visited[v] <- TRUE
+    st$push(list(vertex = v, neighbor = 1, len = new_len))
   }
 
   max_len
@@ -252,8 +295,12 @@ solve1 <- function(data) {
   mat <- t(as.matrix(sapply(strsplit(data, ""), unlist)))
   start <- c(1, 2)
   end <- c(nrow(mat), ncol(mat) - 1)
-  graph <- build_junction_graph(mat, start = start, prob = "1")
-  cat(longest_path_dag(graph, start = start, end = end), "\n")
+  graph <- build_junction_graph(mat, start)
+  # It's a DAG with a chessboard pattern!
+  export_graph(graph, "src/day23_1.png")
+  start_id <- match(key(start[1], start[2]), igraph::V(graph)$name)
+  end_id <- match(key(end[1], end[2]), igraph::V(graph)$name)
+  cat(longest_path_dag(graph, start_id, end_id), "\n")
 }
 
 solve2 <- function(data) {
@@ -261,6 +308,10 @@ solve2 <- function(data) {
   mat[mat %in% c("^", "v", "<", ">")] <- "."
   start <- c(1, 2)
   end <- c(nrow(mat), ncol(mat) - 1)
-  graph <- build_junction_graph(mat, start = start, prob = "2")
-  cat(longest_path(graph, start = start, end = end), "\n")
+  graph <- build_junction_graph(mat, start)
+  graph <- igraph::as_undirected(graph, edge.attr.comb = "first")
+  export_graph(graph, "src/day23_2.png")
+  start_id <- match(key(start[1], start[2]), igraph::V(graph)$name)
+  end_id <- match(key(end[1], end[2]), igraph::V(graph)$name)
+  cat(longest_path(graph, start_id, end_id), "\n")
 }

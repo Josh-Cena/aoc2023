@@ -14,8 +14,9 @@ solve <- function(data, expansion) {
         sum(empty_rows > min(g1y, g2y) & empty_rows < max(g1y, g2y))
       crossed_empty_cols <-
         sum(empty_cols > min(g1x, g2x) & empty_cols < max(g1x, g2x))
-      distance <- abs(g1y - g2y) + abs(g1x - g2x)
-        + ((crossed_empty_rows + crossed_empty_cols) * (expansion - 1))
+      distance <- abs(g1y - g2y) +
+        abs(g1x - g2x) +
+        (crossed_empty_rows + crossed_empty_cols) * (expansion - 1)
       sum <- sum + distance
     }
   }

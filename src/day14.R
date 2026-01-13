@@ -19,7 +19,7 @@ tilt <- function(mat, dir) {
       }
     }
   }
-  return(mat)
+  mat
 }
 
 load <- function(mat) {
@@ -27,7 +27,7 @@ load <- function(mat) {
   for (i in seq_len(nrow(mat))) {
     total <- total + sum(mat[i, ] == "O") * (nrow(mat) - i + 1)
   }
-  return(total)
+  total
 }
 
 solve1 <- function(data) {
@@ -74,15 +74,15 @@ solve2 <- function(data) {
   mat <- t(as.matrix(sapply(strsplit(data, ""), unlist)))
   seen <- new.env()
   its <- 0
-  load <- list()
+  loads <- list()
   repeat {
     key <- serialize_matrix(mat)
-    load[[its + 1]] <- load(mat)
     if (!is.null(seen[[key]])) {
       last_it <- seen[[key]]
       period <- its - last_it
       break
     }
+    loads[[its + 1]] <- load(mat)
     seen[[key]] <- its
     mat <- tilt(mat, "N")
     mat <- tilt(mat, "W")
@@ -90,6 +90,6 @@ solve2 <- function(data) {
     mat <- tilt(mat, "E")
     its <- its + 1
   }
-  ending_pos <- (1000000000 - last_it - 1) %% period + last_it + 1
-  cat(load[[ending_pos + 1]], "\n")
+  ending_pos <- (1000000000 - last_it) %% period + last_it
+  cat(loads[[ending_pos + 1]], "\n")
 }

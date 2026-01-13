@@ -8,17 +8,10 @@ winning_vals <- function(row) {
   discriminant <- t^2 - 4 * d
   if (discriminant < 0) {
     return(0)
-  } else {
-    x1 <- (t - sqrt(discriminant)) / 2
-    x2 <- (t + sqrt(discriminant)) / 2
-    if (floor(x2) == x2) {
-      x2 <- x2 - 0.00001
-    }
-    if (ceiling(x1) == x1) {
-      x1 <- x1 + 0.00001
-    }
-    return(floor(x2) - ceiling(x1) + 1)
   }
+  x1 <- (t - sqrt(discriminant)) / 2
+  x2 <- (t + sqrt(discriminant)) / 2
+  ceiling(x2) - floor(x1) - 1
 }
 
 solve1 <- function(data) {

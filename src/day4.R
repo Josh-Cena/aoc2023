@@ -8,10 +8,10 @@ solve1 <- function(data) {
   lines <- sapply(strsplit(data, ": +"), function(x) x[2])
   lines <- lapply(lines, function(x) {
     halves <- strsplit(x, " +\\| +")[[1]]
-    return(list(
+    list(
       winning = as.numeric(strsplit(halves[1], " +")[[1]]),
       numbers = as.numeric(strsplit(halves[2], " +")[[1]])
-    ))
+    )
   })
   scores <- sapply(lines, num_matches)
   scores <- floor(2^(scores - 1))
@@ -22,10 +22,10 @@ solve2 <- function(data) {
   lines <- sapply(strsplit(data, ": +"), function(x) x[2])
   lines <- lapply(lines, function(x) {
     halves <- strsplit(x, " +\\| +")[[1]]
-    return(list(
+    list(
       winning = as.numeric(strsplit(halves[1], " +")[[1]]),
       numbers = as.numeric(strsplit(halves[2], " +")[[1]])
-    ))
+    )
   })
   scores <- sapply(lines, num_matches)
   counts <- rep(1, length(lines))

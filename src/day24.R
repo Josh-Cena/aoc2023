@@ -1,5 +1,6 @@
 library("gmp")
 
+
 # Solve parametric equation: p1 + t * v1 = p2 + u * v2
 # Which is: [[vx1, -vx2], [vy1, -vy2]] @ [t, u]^T = [x2 - x1, y2 - y1]^T
 intersection2d <- function(l1, l2) {
@@ -9,21 +10,21 @@ intersection2d <- function(l1, l2) {
   if (is.null(sol) || any(sol < 0)) {
     return(NULL)
   }
-  return(c(l1[1], l1[2]) + sol[1] * c(l1[4], l1[5]))
+  c(l1[1], l1[2]) + sol[1] * c(l1[4], l1[5])
 }
 
 in_range <- function(val, range) {
   low <- range[1]
   high <- range[2]
-  return(val >= low && val <= high)
+  val >= low && val <= high
 }
 
 cross <- function(v1, v2) {
-  return(c(
+  c(
     v1[2] * v2[3] - v1[3] * v2[2],
     v1[3] * v2[1] - v1[1] * v2[3],
     v1[1] * v2[2] - v1[2] * v2[1]
-  ))
+  )
 }
 
 solve1 <- function(data) {
@@ -57,6 +58,7 @@ solve1 <- function(data) {
 # After finding v, plug into p = (v_i - v) * t_i + p_i = (v_j - v) * t_j + p_j
 solve2 <- function(data) {
   hails <- lapply(strsplit(gsub("[@,]", "", data[-1]), " +"), as.bigz)
+  # 3 unknowns in v, so need 3 equations to solve for it
   num_eq <- 3
   A <- matrix(as.bigz(0), nrow = num_eq, ncol = 3)
   b <- matrix(as.bigz(0), nrow = num_eq, ncol = 1)

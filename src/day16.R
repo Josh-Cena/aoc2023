@@ -1,72 +1,45 @@
+library("collections", include.only = "stack", warn.conflicts = FALSE)
+
+# left = 1, right = 2, up = 3, down = 4
 deflect_to <- list(
-  "." = list(left = "left", right = "right", up = "up", down = "down"),
-  "/" = list(left = "down", right = "up", up = "right", down = "left"),
-  "\\" = list(left = "up", right = "down", up = "left", down = "right"),
-  "-" = list(
-    left = "left",
-    right = "right",
-    up = c("left", "right"),
-    down = c("left", "right")
-  ),
-  "|" = list(
-    left = c("up", "down"),
-    right = c("up", "down"),
-    up = "up",
-    down = "down"
-  )
+  "." = list(1, 2, 3, 4),
+  "/" = list(4, 3, 2, 1),
+  "\\" = list(3, 4, 1, 2),
+  "-" = list(1, 2, c(1, 2), c(1, 2)),
+  "|" = list(c(3, 4), c(3, 4), 3, 4)
 )
 
-# Remember that these are not ray directions, but the side of the cell
-# that the light is entering.
-dir_to_index <- list(
-  "left" = c(0, 1),
-  "right" = c(0, -1),
-  "up" = c(1, 0),
-  "down" = c(-1, 0)
-)
+dir_to_diff <- list(c(0, -1), c(0, 1), c(-1, 0), c(1, 0))
 
 energize <- function(mat, r_init, c_init, dir_init) {
-  # Which direction have we seen light coming into this cell?
-  # These are *entering* sides, not light direction (which is opposite)
-  has_up <- matrix(FALSE, nrow = nrow(mat), ncol = ncol(mat))
-  has_down <- matrix(FALSE, nrow = nrow(mat), ncol = ncol(mat))
-  has_left <- matrix(FALSE, nrow = nrow(mat), ncol = ncol(mat))
-  has_right <- matrix(FALSE, nrow = nrow(mat), ncol = ncol(mat))
-  has_left[[r_init, c_init]] <- TRUE
-  stack <- list()
-  stack[[1]] <- list(r = r_init, c = c_init, dir = dir_init)
-  while (length(stack) > 0) {
-    cur <- stack[[length(stack)]]
-    stack <- stack[-length(stack)]
+  # Do we have a light in this cell going in this direction?
+  has_light <- lapply(1:4, function(.) matrix(FALSE, nrow(mat), ncol(mat)))
+  has_light[[dir_init]][[r_init, c_init]] <- TRUE
+  stk <- stack()
+  stk$push(list(r = r_init, c = c_init, dir = dir_init))
+  while (stk$size() > 0) {
+    cur <- stk$pop()
     new_dirs <- deflect_to[[mat[[cur$r, cur$c]]]][[cur$dir]]
     for (dir in new_dirs) {
-      d <- dir_to_index[[dir]]
+      d <- dir_to_diff[[dir]]
       new_r <- cur$r + d[1]
       new_c <- cur$c + d[2]
       if (new_r < 1 || new_r > nrow(mat) || new_c < 1 || new_c > ncol(mat)) {
         next
       }
-      if (dir == "left" && !has_left[[new_r, new_c]]) {
-        has_left[[new_r, new_c]] <- TRUE
-        stack[[length(stack) + 1]] <- list(r = new_r, c = new_c, dir = dir)
-      } else if (dir == "right" && !has_right[[new_r, new_c]]) {
-        has_right[[new_r, new_c]] <- TRUE
-        stack[[length(stack) + 1]] <- list(r = new_r, c = new_c, dir = dir)
-      } else if (dir == "up" && !has_up[[new_r, new_c]]) {
-        has_up[[new_r, new_c]] <- TRUE
-        stack[[length(stack) + 1]] <- list(r = new_r, c = new_c, dir = dir)
-      } else if (dir == "down" && !has_down[[new_r, new_c]]) {
-        has_down[[new_r, new_c]] <- TRUE
-        stack[[length(stack) + 1]] <- list(r = new_r, c = new_c, dir = dir)
+      if (!has_light[[dir]][[new_r, new_c]]) {
+        has_light[[dir]][[new_r, new_c]] <- TRUE
+        stk$push(list(r = new_r, c = new_c, dir = dir))
       }
     }
   }
-  sum(has_up | has_down | has_left | has_right)
+  sum(has_light[[1]] | has_light[[2]] | has_light[[3]] | has_light[[4]])
 }
 
 solve1 <- function(data) {
   mat <- t(as.matrix(sapply(strsplit(data, ""), unlist)))
-  energized <- energize(mat, 1, 1, "left")
+  # Initial light goes to the right
+  energized <- energize(mat, 1, 1, 2)
   cat(energized, "\n")
 }
 
@@ -76,25 +49,13 @@ solve2 <- function(data) {
   # I know this isn't the most efficient because at some point we can memoize
   # and use an existing calculation, but we just have 400 edge cells anyway,
   # and again memoization is a PITA in R due to the lack of hashing.
-  for (r in 1:nrow(mat)) {
-    energized <- energize(mat, r, 1, "left")
-    if (energized > max_energized) {
-      max_energized <- energized
-    }
-    energized <- energize(mat, r, ncol(mat), "right")
-    if (energized > max_energized) {
-      max_energized <- energized
-    }
+  for (r in seq_len(nrow(mat))) {
+    max_energized <- max(max_energized, energize(mat, r, 1, 2))
+    max_energized <- max(max_energized, energize(mat, r, ncol(mat), 1))
   }
-  for (c in 1:ncol(mat)) {
-    energized <- energize(mat, 1, c, "up")
-    if (energized > max_energized) {
-      max_energized <- energized
-    }
-    energized <- energize(mat, nrow(mat), c, "down")
-    if (energized > max_energized) {
-      max_energized <- energized
-    }
+  for (c in seq_len(ncol(mat))) {
+    max_energized <- max(max_energized, energize(mat, 1, c, 4))
+    max_energized <- max(max_energized, energize(mat, nrow(mat), c, 3))
   }
   cat(max_energized, "\n")
 }

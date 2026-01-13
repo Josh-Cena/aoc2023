@@ -8,45 +8,21 @@ types <- list(
   "high card" = 0
 )
 
-hand_type <- function(hand) {
-  card_counts <- table(unlist(strsplit(hand, "")))
-  max_count <- max(card_counts)
+hand_type <- function(max_count, uniq_values) {
   if (max_count == 5) {
-    return(types[["five of a kind"]])
+    types[["five of a kind"]]
   } else if (max_count == 4) {
-    return(types[["four of a kind"]])
-  } else if (max_count == 3 && length(card_counts) == 2) {
-    return(types[["full house"]])
+    types[["four of a kind"]]
+  } else if (max_count == 3 && uniq_values == 2) {
+    types[["full house"]]
   } else if (max_count == 3) {
-    return(types[["three of a kind"]])
-  } else if (max_count == 2 && length(card_counts) == 3) {
-    return(types[["two pair"]])
+    types[["three of a kind"]]
+  } else if (max_count == 2 && uniq_values == 3) {
+    types[["two pair"]]
   } else if (max_count == 2) {
-    return(types[["one pair"]])
+    types[["one pair"]]
   } else {
-    return(types[["high card"]])
-  }
-}
-
-hand_type_joker <- function(hand) {
-  card_counts <- table(unlist(strsplit(hand, "")))
-  j_count <- if ("J" %in% names(card_counts)) card_counts["J"] else 0
-  card_counts <- card_counts[names(card_counts) != "J"]
-  max_count <- (if (length(card_counts) > 0) max(card_counts) else 0) + j_count
-  if (max_count == 5) {
-    return(types[["five of a kind"]])
-  } else if (max_count == 4) {
-    return(types[["four of a kind"]])
-  } else if (max_count == 3 && length(card_counts) == 2) {
-    return(types[["full house"]])
-  } else if (max_count == 3) {
-    return(types[["three of a kind"]])
-  } else if (max_count == 2 && length(card_counts) == 3) {
-    return(types[["two pair"]])
-  } else if (max_count == 2) {
-    return(types[["one pair"]])
-  } else {
-    return(types[["high card"]])
+    types[["high card"]]
   }
 }
 
@@ -66,7 +42,7 @@ compare_rows <- function(strengths) {
         return(-1)
       }
     }
-    return(0)
+    0
   }
 }
 
@@ -78,24 +54,14 @@ solve1 <- function(data) {
   ))
   data <- setNames(data, c("hand", "bid"))
   data$bid <- as.numeric(data$bid)
-  data$type <- sapply(data$hand, hand_type)
+  data$type <- sapply(data$hand, function(hand) {
+    card_counts <- table(unlist(strsplit(hand, "")))
+    max_count <- max(card_counts)
+    hand_type(max_count, length(card_counts))
+  })
   data_sorted <- quicksort(
     split(data, seq_len(nrow(data))),
-    compare_rows(c(
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "T",
-      "J",
-      "Q",
-      "K",
-      "A"
-    ))
+    compare_rows(unlist(strsplit("23456789TJQKA", "")))
   )
   data <- do.call(rbind, data_sorted)
   total_score <- sum(seq_len(nrow(data)) * data$bid)
@@ -110,24 +76,17 @@ solve2 <- function(data) {
   ))
   data <- setNames(data, c("hand", "bid"))
   data$bid <- as.numeric(data$bid)
-  data$type <- sapply(data$hand, hand_type_joker)
+  data$type <- sapply(data$hand, function(hand) {
+    card_counts <- table(unlist(strsplit(hand, "")))
+    j_count <- if ("J" %in% names(card_counts)) card_counts["J"] else 0
+    card_counts <- card_counts[names(card_counts) != "J"]
+    max_count <- (if (length(card_counts) > 0) max(card_counts) else 0) +
+      j_count
+    hand_type(max_count, length(card_counts))
+  })
   data_sorted <- quicksort(
     split(data, seq_len(nrow(data))),
-    compare_rows(c(
-      "J",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "T",
-      "Q",
-      "K",
-      "A"
-    ))
+    compare_rows(unlist(strsplit("J23456789TQKA", "")))
   )
   data <- do.call(rbind, data_sorted)
   total_score <- sum(seq_len(nrow(data)) * data$bid)

@@ -11,7 +11,7 @@ is_symmetric_about <- function(data, axis, dir, tolerance) {
     other <- data[, range_other, drop = FALSE]
   }
   difference <- sum(other != reflected_half)
-  return(difference == tolerance)
+  difference == tolerance
 }
 
 num_axes <- function(data, tolerance) {
@@ -26,7 +26,7 @@ num_axes <- function(data, tolerance) {
       total <- total + i
     }
   }
-  return(total)
+  total
 }
 
 solve1 <- function(data) {

@@ -27,7 +27,7 @@ solve1 <- function(data) {
 }
 
 key <- function(i, j) {
-  return(paste0(i, ",", j))
+  paste0(i, ",", j)
 }
 
 solve2 <- function(data) {
@@ -61,25 +61,21 @@ solve2 <- function(data) {
         neighbors <-
           add_neighbor(neighbors, key(i, r), as.integer(values[j]))
       }
+      rows <- integer(0)
       if (i > 1) {
-        above <- substr(data[i - 1], l, r)
+        rows <- c(rows, i - 1)
+      }
+      if (i < length(data)) {
+        rows <- c(rows, i + 1)
+      }
+      for (row in rows) {
+        above <- substr(data[row], l, r)
         matches <- gregexpr("\\*", above)[[1]]
         if (matches[1] != -1) {
           for (k in matches) {
             # If l == 0, then we need to add 1 to k to compensate for the
             # leftmost lost character in the above string
-            gear_pos <- key(i - 1, l + k - min(l, 1))
-            neighbors <-
-              add_neighbor(neighbors, gear_pos, as.integer(values[j]))
-          }
-        }
-      }
-      if (i < length(data)) {
-        below <- substr(data[i + 1], l, r)
-        matches <- gregexpr("\\*", below)[[1]]
-        if (matches[1] != -1) {
-          for (k in matches) {
-            gear_pos <- key(i + 1, l + k - min(l, 1))
+            gear_pos <- key(row, l + k - min(l, 1))
             neighbors <-
               add_neighbor(neighbors, gear_pos, as.integer(values[j]))
           }
