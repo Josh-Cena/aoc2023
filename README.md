@@ -1,7 +1,8 @@
 # Advent of Code 2023
 
-Language: ![R](https://img.shields.io/badge/r-%23276DC3.svg?style=for-the-badge&logo=r&logoColor=white) (4.3.2)
-Package Manager: R itself, just run `installer.R`!
+- Language: ![R](https://img.shields.io/badge/r-%23276DC3.svg?style=for-the-badge&logo=r&logoColor=white) (4.3.2)
+- Package Manager: R itself, just run `installer.R`!
+- [Writeup](https://joshcena.com/notes/aoc/)
 
 This repo uses my standard AoC setup. Inputs are stored as `inputs/day{n}/{name}.txt`. By default `name` is `real` (the real question). To run a specific day's solution, use the following command:
 
